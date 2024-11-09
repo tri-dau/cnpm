@@ -1,5 +1,5 @@
 import React, { useState } from 'react';
-import { Link } from 'react-router-dom';
+import { Link, useNavigate } from 'react-router-dom';
 import './styles.css';
 
 function Register() {
@@ -7,21 +7,50 @@ function Register() {
   const [email, setEmail] = useState('');
   const [password, setPassword] = useState('');
   const [confirmPassword, setConfirmPassword] = useState('');
+  const [error, setError] = useState('');
+  const navigate = useNavigate();
 
-  const handleSubmit = (e) => {
+  const handleSubmit = async (e) => {
     e.preventDefault();
+    setError('');
+
     if (!email.includes('@')) {
-      alert("Email không hợp lệ");
+      setError("Email không hợp lệ");
       return;
     }
     if (password !== confirmPassword) {
-      alert("Mật khẩu và Xác nhận mật khẩu không khớp!");
+      setError("Mật khẩu và Xác nhận mật khẩu không khớp!");
+      return;
+    }
+    if (password.length < 6) {
+      setError("Mật khẩu phải có ít nhất 6 ký tự!");
       return;
     }
 
-    console.log("Username:", username);
-    console.log("Email:", email);
-    console.log("Password:", password);
+    try {
+      const response = await fetch('http://localhost:5000/api/register', {
+        method: 'POST',
+        headers: {
+          'Content-Type': 'application/json',
+        },
+        body: JSON.stringify({
+          username,
+          email,
+          password,
+        }),
+      });
+
+      const data = await response.json();
+
+      if (!response.ok) {
+        throw new Error(data.error || 'Đăng ký thất bại');
+      }
+
+      // Đăng ký thành công - chuyển đến trang đăng nhập
+      navigate('/login');
+    } catch (err) {
+      setError(err.message);
+    }
   };
 
   return (
@@ -40,6 +69,8 @@ function Register() {
           <h2 className="form-title">
             Đăng ký
           </h2>
+
+          {error && <div className="error-message">{error}</div>}
 
           <div className="input-wrapper">
             <input
@@ -71,6 +102,7 @@ function Register() {
               onChange={(e) => setPassword(e.target.value)}
               placeholder="Mật khẩu"
               required
+              minLength="6"
             />
           </div>
 
