@@ -1,28 +1,6 @@
 import React, { useState } from 'react';
-import { Link as RouterLink } from 'react-router-dom';
-import {
-  RootContainer,
-  LeftSection,
-  RightSection,
-  LogoWrapper,
-  Logo,
-  FormWrapper,
-  InputWrapper,
-  StyledTextField,
-  StyledButton,
-  StyledLink
-} from './mui-styles';
-import { Typography } from '@mui/material';
-import { styled } from '@mui/material/styles';
-
-const StyledTypography = styled(Typography)(({ theme }) => ({
-  position: 'absolute',
-  top: '50%',
-  left: '50%',
-  transform: 'translate(-50%, -50%)',
-  color: '#fff',
-  textAlign: 'center',
-}));
+import { Link } from 'react-router-dom';
+import './styles.css';
 
 function Login() {
   const [email, setEmail] = useState('');
@@ -35,60 +13,57 @@ function Login() {
   };
 
   return (
-    <RootContainer>
-      <LeftSection sx={{ bgcolor: 'primary.main' }}>
-        <LogoWrapper>
-          <Logo src="dau2.png" alt="Logo" />
-        </LogoWrapper>
-        <StyledTypography variant="h4">
+    <div className="root-container">
+      <div className="left-section">
+        <div className="logo-wrapper">
+          <img src="dau2.png" alt="Logo" className="logo" />
+        </div>
+        <h1 className="left-title">
           TRANG THÔNG TIN
-        </StyledTypography>
-      </LeftSection>
+        </h1>
+      </div>
 
-      <RightSection>
-        <FormWrapper component="form" onSubmit={handleSubmit}>
-          <Typography variant="h5" gutterBottom align="center">
+      <div className="right-section">
+        <form className="form-wrapper" onSubmit={handleSubmit}>
+          <h2 className="form-title">
             Đăng nhập
-          </Typography>
+          </h2>
 
-          <InputWrapper>
-            <StyledTextField
-              label="Email"
+          <div className="input-wrapper">
+            <input
+              className="text-field"
               type="email"
               value={email}
               onChange={(e) => setEmail(e.target.value)}
-              placeholder="abc@gmail.com"
+              placeholder="Email"
               required
-              fullWidth
             />
-          </InputWrapper>
+          </div>
 
-          <InputWrapper>
-            <StyledTextField
-              label="Mật khẩu"
+          <div className="input-wrapper">
+            <input
+              className="text-field"
               type="password"
               value={password}
               onChange={(e) => setPassword(e.target.value)}
-              placeholder="*************"
+              placeholder="Mật khẩu"
               required
-              fullWidth
             />
-          </InputWrapper>
+          </div>
 
-          <StyledButton
+          <button
             type="submit"
-            variant="contained"
-            color="primary"
+            className="submit-button"
           >
             Đăng nhập
-          </StyledButton>
-        </FormWrapper>
+          </button>
+        </form>
         
-        <StyledLink component={RouterLink} to="/">
+        <Link to="/" className="home-link">
           Về trang chủ
-        </StyledLink>
-      </RightSection>
-    </RootContainer>
+        </Link>
+      </div>
+    </div>
   );
 }
 

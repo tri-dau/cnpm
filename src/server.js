@@ -1,39 +1,73 @@
 const express = require('express');
-const mysql = require('mysql2');
-const cors = require('cors');
-
+const { Sequelize, DataTypes } = require('sequelize');
 const app = express();
-app.use(cors());
-app.use(express.json());
 
-const db = mysql.createConnection({
-  host: 'localhost',
-  user: 'root',
-  password: '',
-  database: 'web_trang_thong_tin'
+// Enable CORS
+app.use((req, res, next) => {
+    res.setHeader('Access-Control-Allow-Origin', '*');
+    res.setHeader('Access-Control-Allow-Methods', 'GET, POST, PUT, DELETE');
+    res.setHeader('Access-Control-Allow-Headers', 'Content-Type');
+    next();
 });
 
-db.connect((err) => {
-  if (err) {
-    console.error('Lỗi kết nối MySQL:', err);
-  } else {
-    console.log('Đã kết nối thành công với MySQL');
-  }
+// Database connection
+const sequelize = new Sequelize('web_trang_thong_tin', 'root', '', {
+    host: 'localhost',
+    dialect: 'mysql'
 });
 
-app.get('/api/posts', (req, res) => {
-  const query = 'SELECT * FROM bai-viet';
-  db.query(query, (err, results) => {
-    if (err) {
-      console.error('Lỗi truy vấn:', err);
-      res.status(500).send('Lỗi truy vấn cơ sở dữ liệu');
-    } else {
-      res.json(results);
+// Define Post model
+const Post = sequelize.define('Post', {
+    postid: {
+        type: DataTypes.INTEGER,
+        primaryKey: true,
+        autoIncrement: true
+    },
+    title: {
+        type: DataTypes.STRING,
+        allowNull: false
+    },
+    nd: {
+        type: DataTypes.TEXT,
+        allowNull: false
+    },
+    createdAt: {
+        type: DataTypes.DATE,
+        defaultValue: Sequelize.NOW
     }
-  });
+}, {
+    tableName: 'post',
+    timestamps: true,
+    updatedAt: false
 });
 
-const PORT = 3001;
-app.listen(PORT, () => {
-  console.log(`Máy chủ đang chạy tại http://localhost:${PORT}`);
+// API endpoint to get posts
+app.get('/api/posts', async (req, res) => {
+    try {
+        const posts = await Post.findAll();
+        res.json(posts);
+    } catch (error) {
+        console.error('Error:', error);
+        res.status(500).json({ error: 'Internal server error' });
+    }
 });
+
+// Start server
+const PORT = 5000;
+async function startServer() {
+    try {
+        await sequelize.authenticate();
+        console.log('Database connected!');
+        
+        await sequelize.sync();
+        console.log('Tables synchronized!');
+
+        app.listen(PORT, () => {
+            console.log(`Server running on port ${PORT}`);
+        });
+    } catch (error) {
+        console.error('Error starting server:', error);
+    }
+}
+
+startServer();
