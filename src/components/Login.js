@@ -11,7 +11,7 @@ function Login() {
   const handleSubmit = async (e) => {
     e.preventDefault();
     setError('');
-    
+
     try {
       const response = await fetch('http://localhost:5000/api/login', {
         method: 'POST',
@@ -20,17 +20,14 @@ function Login() {
         },
         body: JSON.stringify({ username, password }),
       });
-      
+
       const data = await response.json();
-      
+
       if (!response.ok) {
         throw new Error(data.error || 'Đăng nhập thất bại');
       }
-      
-      // Lưu thông tin user
+
       localStorage.setItem('user', JSON.stringify(data.user));
-      
-      // Chuyển hướng về trang chủ
       navigate('/');
     } catch (err) {
       setError(err.message);
@@ -78,17 +75,16 @@ function Login() {
             />
           </div>
 
-          <button
-            type="submit"
-            className="submit-button"
-          >
-            Đăng nhập
-          </button>
+          <div className="button-container">
+            <button type="submit" className="submit-button">
+              Đăng nhập
+            </button>
+            
+            <Link to="/" className="home-link">
+              Về trang chủ
+            </Link>
+          </div>
         </form>
-        
-        <Link to="/" className="home-link">
-          Về trang chủ
-        </Link>
       </div>
     </div>
   );

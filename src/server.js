@@ -57,6 +57,14 @@ const Post = sequelize.define('Post', {
         type: DataTypes.TEXT,
         allowNull: false
     },
+    authorId: {
+        type: DataTypes.INTEGER,
+        allowNull: false,
+        references: {
+            model: User,
+            key: 'userid'
+        }
+    },
     createdAt: {
         type: DataTypes.DATE,
         defaultValue: Sequelize.NOW
@@ -66,6 +74,9 @@ const Post = sequelize.define('Post', {
     timestamps: true,
     updatedAt: false
 });
+
+User.hasMany(Post, { foreignKey: 'authorId' });
+Post.belongsTo(User, { foreignKey: 'authorId', as: 'author' });
 
 app.post('/api/register', async (req, res) => {
     try {
@@ -100,7 +111,6 @@ app.post('/api/login', async (req, res) => {
             return res.status(401).json({ error: 'Tên đăng nhập hoặc mật khẩu không đúng' });
         }
         
-        // So sánh trực tiếp mật khẩu không hash
         if (password !== user.password) {
             return res.status(401).json({ error: 'Tên đăng nhập hoặc mật khẩu không đúng' });
         }
@@ -121,10 +131,76 @@ app.post('/api/login', async (req, res) => {
 
 app.get('/api/posts', async (req, res) => {
     try {
-        const posts = await Post.findAll();
+        const posts = await Post.findAll({
+            include: [{
+                model: User,
+                as: 'author',
+                attributes: ['username']
+            }],
+            order: [['createdAt', 'DESC']]
+        });
         res.json(posts);
     } catch (error) {
         console.error('Error:', error);
+        res.status(500).json({ error: 'Lỗi server' });
+    }
+});
+
+app.get('/api/posts/:id', async (req, res) => {
+    try {
+        const postId = req.params.id;
+        const post = await Post.findOne({
+            where: { postid: postId },
+            include: [{
+                model: User,
+                as: 'author',
+                attributes: ['username']
+            }]
+        });
+        
+        if (!post) {
+            return res.status(404).json({ error: 'Không tìm thấy bài viết' });
+        }
+        
+        res.json(post);
+    } catch (error) {
+        console.error('Error:', error);
+        res.status(500).json({ error: 'Lỗi server' });
+    }
+});
+
+app.post('/api/posts', async (req, res) => {
+    try {
+        const { title, nd, authorId } = req.body;
+        
+        if (!title || !nd || !authorId) {
+            return res.status(400).json({ 
+                error: 'Tiêu đề, nội dung và tác giả không được để trống' 
+            });
+        }
+
+        const post = await Post.create({
+            title,
+            nd,
+            authorId
+        });
+
+        // Lấy thông tin bài viết kèm theo thông tin tác giả
+        const postWithAuthor = await Post.findOne({
+            where: { postid: post.postid },
+            include: [{
+                model: User,
+                as: 'author',
+                attributes: ['username']
+            }]
+        });
+
+        res.status(201).json({
+            message: 'Tạo bài viết thành công',
+            post: postWithAuthor
+        });
+    } catch (error) {
+        console.error('Error creating post:', error);
         res.status(500).json({ error: 'Lỗi server' });
     }
 });
@@ -135,7 +211,7 @@ async function startServer() {
         await sequelize.authenticate();
         console.log('Database connected!');
         
-        await sequelize.sync();
+        await sequelize.sync({ alter: true });
         console.log('Tables synchronized!');
 
         app.listen(PORT, () => {

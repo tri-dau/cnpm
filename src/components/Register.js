@@ -46,7 +46,6 @@ function Register() {
         throw new Error(data.error || 'Đăng ký thất bại');
       }
 
-      // Đăng ký thành công - chuyển đến trang đăng nhập
       navigate('/login');
     } catch (err) {
       setError(err.message);
@@ -117,17 +116,16 @@ function Register() {
             />
           </div>
 
-          <button
-            type="submit"
-            className="submit-button"
-          >
-            Đăng ký
-          </button>
+          <div className="button-container">
+            <button type="submit" className="submit-button">
+              Đăng ký
+            </button>
+            
+            <Link to="/" className="home-link">
+              Về trang chủ
+            </Link>
+          </div>
         </form>
-
-        <Link to="/" className="home-link">
-          Về trang chủ
-        </Link>
       </div>
     </div>
   );
