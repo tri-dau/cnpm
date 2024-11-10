@@ -42,7 +42,7 @@ function Home() {
   const handleLogout = () => {
     localStorage.removeItem("user");
     setUser(null);
-    navigate("/login");
+    navigate("/");
   };
 
   return (
@@ -131,6 +131,34 @@ function Home() {
           </div>
         )}
       </main>
+
+      <footer className="footer">
+        <div className="footer-content">
+          <div className="footer-section">
+            <h3 className="footer-title">Liên hệ</h3>
+            <div className="contact-info">
+              <p>Email: contact@example.com</p>
+              <p>Điện thoại: (84) 123-456-789</p>
+              <p>Địa chỉ: 123 Đường ABC, Quận XYZ, TP.DN</p>
+            </div>
+            <div className="social-links">
+              <a href="https://youtu.be/dQw4w9WgXcQ?si=bP5Z6sNCjaXz8hZW" className="social-link" target="_blank" rel="noopener noreferrer">
+                Facebook
+              </a>
+              <a href="https://youtu.be/dQw4w9WgXcQ?si=bP5Z6sNCjaXz8hZW" className="social-link" target="_blank" rel="noopener noreferrer">
+                Twitter
+              </a>
+              <a href="https://youtu.be/dQw4w9WgXcQ?si=bP5Z6sNCjaXz8hZW" className="social-link" target="_blank" rel="noopener noreferrer">
+                Youtube
+              </a>
+            </div>
+          </div>
+        </div>
+        
+        <div className="footer-bottom">
+          <p>&copy; {new Date().getFullYear()} TRI CORP. Tất cả các quyền được bảo lưu.</p>
+        </div>
+      </footer>
     </div>
   );
 }

@@ -78,6 +78,7 @@ const Post = sequelize.define('Post', {
 User.hasMany(Post, { foreignKey: 'authorId' });
 Post.belongsTo(User, { foreignKey: 'authorId', as: 'author' });
 
+// tạo tài khoản
 app.post('/api/register', async (req, res) => {
     try {
         const { username, email, password } = req.body;
@@ -102,6 +103,7 @@ app.post('/api/register', async (req, res) => {
     }
 });
 
+// đăng nhập
 app.post('/api/login', async (req, res) => {
     try {
         const { username, password } = req.body;
@@ -129,6 +131,7 @@ app.post('/api/login', async (req, res) => {
     }
 });
 
+// hiện thị bài viết tại trang đăng nhập
 app.get('/api/posts', async (req, res) => {
     try {
         const posts = await Post.findAll({
@@ -146,6 +149,7 @@ app.get('/api/posts', async (req, res) => {
     }
 });
 
+// hiển thị bài viết chi tiết
 app.get('/api/posts/:id', async (req, res) => {
     try {
         const postId = req.params.id;
@@ -169,6 +173,7 @@ app.get('/api/posts/:id', async (req, res) => {
     }
 });
 
+// tạo bài viết
 app.post('/api/posts', async (req, res) => {
     try {
         const { title, nd, authorId } = req.body;
@@ -185,7 +190,6 @@ app.post('/api/posts', async (req, res) => {
             authorId
         });
 
-        // Lấy thông tin bài viết kèm theo thông tin tác giả
         const postWithAuthor = await Post.findOne({
             where: { postid: post.postid },
             include: [{
@@ -205,6 +209,7 @@ app.post('/api/posts', async (req, res) => {
     }
 });
 
+// khởi tạo server
 const PORT = 5000;
 async function startServer() {
     try {
