@@ -145,8 +145,8 @@ function Home() {
               <a href="https://youtu.be/dQw4w9WgXcQ?si=bP5Z6sNCjaXz8hZW" className="social-link" target="_blank" rel="noopener noreferrer">
                 Facebook
               </a>
-              <a href="https://youtu.be/dQw4w9WgXcQ?si=bP5Z6sNCjaXz8hZW" className="social-link" target="_blank" rel="noopener noreferrer">
-                Twitter
+              <a href="https://github.com/tribeti" className="social-link" target="_blank" rel="noopener noreferrer">
+                Github
               </a>
               <a href="https://youtu.be/dQw4w9WgXcQ?si=bP5Z6sNCjaXz8hZW" className="social-link" target="_blank" rel="noopener noreferrer">
                 Youtube
