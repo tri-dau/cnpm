@@ -209,6 +209,88 @@ app.post('/api/posts', async (req, res) => {
     }
 });
 
+// Cập nhật bài viết
+app.put('/api/posts/:id', async (req, res) => {
+    try {
+        const postId = req.params.id;
+        const { title, nd, authorId } = req.body;
+        
+        // Kiểm tra bài viết tồn tại
+        const post = await Post.findOne({ 
+            where: { 
+                postid: postId
+            }
+        });
+        
+        if (!post) {
+            return res.status(404).json({ error: 'Không tìm thấy bài viết' });
+        }
+        
+        // Kiểm tra quyền chỉnh sửa
+        if (post.authorId !== authorId) {
+            return res.status(403).json({ error: 'Bạn không có quyền chỉnh sửa bài viết này' });
+        }
+        
+        // Cập nhật bài viết
+        await post.update({
+            title,
+            nd
+        });
+        
+        // Lấy bài viết đã cập nhật kèm thông tin tác giả
+        const updatedPost = await Post.findOne({
+            where: { postid: postId },
+            include: [{
+                model: User,
+                as: 'author',
+                attributes: ['username']
+            }]
+        });
+        
+        res.json({
+            message: 'Cập nhật bài viết thành công',
+            post: updatedPost
+        });
+    } catch (error) {
+        console.error('Error updating post:', error);
+        res.status(500).json({ error: 'Lỗi server' });
+    }
+});
+
+// Xóa bài viết
+app.delete('/api/posts/:id', async (req, res) => {
+    try {
+        const postId = req.params.id;
+        const { authorId } = req.body;
+        
+        // Kiểm tra bài viết tồn tại
+        const post = await Post.findOne({ 
+            where: { 
+                postid: postId
+            }
+        });
+        
+        if (!post) {
+            return res.status(404).json({ error: 'Không tìm thấy bài viết' });
+        }
+        
+        // Kiểm tra quyền xóa
+        if (post.authorId !== authorId) {
+            return res.status(403).json({ error: 'Bạn không có quyền xóa bài viết này' });
+        }
+        
+        // Xóa bài viết
+        await post.destroy();
+        
+        res.json({
+            message: 'Xóa bài viết thành công'
+        });
+    } catch (error) {
+        console.error('Error deleting post:', error);
+        res.status(500).json({ error: 'Lỗi server' });
+    }
+});
+
 // khởi tạo server
 const PORT = 5000;
 async function startServer() {
