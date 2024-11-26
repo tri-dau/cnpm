@@ -55,15 +55,16 @@ function Register() {
   return (
     <div className="root-container">
       <div className="left-section">
-        <div className="logo-wrapper">
-          <img src="dau2.png" alt="Logo" className="logo" />
-        </div>
         <h1 className="left-title">
           TRANG THÔNG TIN
         </h1>
+        <img src='https://cdn.pixabay.com/photo/2024/08/22/18/22/city-8990012_960_720.jpg'></img>
       </div>
 
       <div className="right-section">
+      <div className="logo-wrapper">
+          <img src="dau2.png" alt="Logo" className="logo" />
+        </div>
         <form className="form-wrapper" onSubmit={handleSubmit}>
           <h2 className="form-title">
             Đăng ký
@@ -120,7 +121,11 @@ function Register() {
             <button type="submit" className="submit-button">
               Đăng ký
             </button>
-            
+
+            <Link to="/login" className="home-link">
+              Đăng nhập tại đây
+            </Link>
+
             <Link to="/" className="home-link">
               Về trang chủ
             </Link>
