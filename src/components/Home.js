@@ -45,35 +45,8 @@ function Home() {
     navigate("/");
   };
 
-  const renderPostImage = (post) => {
-    try {
-      const images = post.images ? JSON.parse(post.images) : [];
-
-      if (images.length > 0) {
-        const imageUrl = `http://localhost:5000/${images[0]}`;
-        return (
-          <div className="post-image-container h-48 w-full overflow-hidden">
-            <img
-              src={imageUrl}
-              alt="Post thumbnail"
-              className="w-full h-full object-cover"
-              onError={(e) => {
-                e.target.style.display = 'none';
-                console.warn(`Failed to load image for post ${post.postid}`);
-              }}
-            />
-          </div>
-        );
-      }
-      return null;
-    } catch (error) {
-      console.error("Error rendering post image:", error);
-      return null;
-    }
-  };
-
   return (
-    <div className="min-h-screen flex flex-col">
+    <div style={{ "display": "flex", "flexDirection": "column", "minHeight": "100vh" }}>
       <header className="header">
         <nav className="nav-container">
           <div className="logo-wrapper">
@@ -124,8 +97,14 @@ function Home() {
                     className="post-card"
                   >
                     <article>
-                    {renderPostImage(post)}
-                      <div style={{ "padding": "1rem" }}>
+                      <div className="post-image-container">
+                        <img
+                          src={`http://localhost:5000/uploads/${post.images}`|| "placeholder-image.jpg"}
+                          alt="No image for this post :("
+                          className="post-image"
+                        />
+                      </div>
+                      <div style={{ padding: "1rem" }}>
                         <h2 className="post-title">{post.title}</h2>
                         <p className="post-description">
                           {post.nd.length > 150

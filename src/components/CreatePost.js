@@ -1,5 +1,5 @@
 import React, { useState, useEffect, useRef } from 'react';
-import { useNavigate } from 'react-router-dom';
+import { useNavigate, Link } from 'react-router-dom';
 import './CreatePost.css';
 
 function CreatePost() {
@@ -121,6 +121,13 @@ function CreatePost() {
 
   return (
     <div className="create-post-container">
+      <header className="post-detail-header">
+        <div className="header-content">
+          <Link to="/" className="back-button">
+            Trở về trang chủ
+          </Link>
+        </div>
+      </header>
       <form onSubmit={handleSubmit} className="create-post-form">
         <h2 className="form-title">Tạo bài viết mới</h2>
 

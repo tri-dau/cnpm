@@ -380,7 +380,13 @@ h1 {
 
 .post-image-container {
   overflow: hidden;
-  height: 12rem;
+  max-height: 12rem;
+}
+
+.post-image {
+  height: 100%;
+  width: 100%;
+  object-fit: cover;
 }
 
 .post-metadata {
