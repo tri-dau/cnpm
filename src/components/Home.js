@@ -45,6 +45,33 @@ function Home() {
     navigate("/");
   };
 
+  const renderPostImage = (post) => {
+    try {
+      const images = post.images ? JSON.parse(post.images) : [];
+
+      if (images.length > 0) {
+        const imageUrl = `http://localhost:5000/${images[0]}`;
+        return (
+          <div className="post-image-container h-48 w-full overflow-hidden">
+            <img
+              src={imageUrl}
+              alt="Post thumbnail"
+              className="w-full h-full object-cover"
+              onError={(e) => {
+                e.target.style.display = 'none';
+                console.warn(`Failed to load image for post ${post.postid}`);
+              }}
+            />
+          </div>
+        );
+      }
+      return null;
+    } catch (error) {
+      console.error("Error rendering post image:", error);
+      return null;
+    }
+  };
+
   return (
     <div className="min-h-screen flex flex-col">
       <header className="header">
@@ -52,6 +79,7 @@ function Home() {
           <div className="logo-wrapper">
             <img src="dau2.png" alt="Logo" className="logo" />
           </div>
+          <h1> TRANG THÔNG TIN CÔNG NGHỆ </h1>
           <div className="auth-buttons">
             {user ? (
               <>
@@ -96,19 +124,22 @@ function Home() {
                     className="post-card"
                   >
                     <article>
-                      <h2 className="post-title">{post.title}</h2>
-                      <p className="post-description">
-                        {post.nd.length > 150
-                          ? `${post.nd.substring(0, 150)}...`
-                          : post.nd}
-                      </p>
-                      <div className="post-metadata">
-                        <p className="post-author">
-                          Tác giả: {post.author.username}
+                    {renderPostImage(post)}
+                      <div style={{ "padding": "1rem" }}>
+                        <h2 className="post-title">{post.title}</h2>
+                        <p className="post-description">
+                          {post.nd.length > 150
+                            ? `${post.nd.substring(0, 150)}...`
+                            : post.nd}
                         </p>
-                        <p className="post-date">
-                          {new Date(post.createdAt).toLocaleDateString()}
-                        </p>
+                        <div className="post-metadata">
+                          <p className="post-author">
+                            Tác giả: {post.author.username}
+                          </p>
+                          <p className="post-date">
+                            {new Date(post.createdAt).toLocaleString()}
+                          </p>
+                        </div>
                       </div>
                     </article>
                   </Link>
@@ -120,9 +151,19 @@ function Home() {
         ) : (
           <div className="welcome-container">
             <div className="welcome-content">
-              <div className="welcome-image-wrapper">
+              <div className="welcome-text-section">
+                <div className="text">
+                  Lorem ipsum dolor sit amet, consectetur adipiscing elit. Vestibulum lobortis varius tristique. Maecenas ut tincidunt velit. Sed nec magna nisl. Nullam tincidunt enim vel nunc ultrices, ac molestie purus malesuada. Cras malesuada tempor dolor, ut laoreet odio vestibulum a.
+                </div>
+                <div className="auth-buttons">
+                  <Link to="/login" className="login-button outlined">
+                    Bắt đầu xem tin ngay !
+                  </Link>
+                </div>
+              </div>
+              <div className="welcome-image-section">
                 <img
-                  src="https://media1.giphy.com/media/v1.Y2lkPTc5MGI3NjExb3piMmd5ZjdhdTJ4ZzFvN2Yxb2pqYXV0Y3NjaG1lbWpmaml5eGczdyZlcD12MV9pbnRlcm5hbF9naWZfYnlfaWQmY3Q9Zw/S2IfEQqgWc0AH4r6Al/giphy.webp"
+                  src="https://cdn.pixabay.com/photo/2024/06/28/18/47/china-8859961_1280.jpg"
                   alt="Welcome"
                   className="welcome-image"
                 />
@@ -154,7 +195,7 @@ function Home() {
             </div>
           </div>
         </div>
-        
+
         <div className="footer-bottom">
           <p>&copy; {new Date().getFullYear()} TRI CORP. Tất cả các quyền được bảo lưu.</p>
         </div>

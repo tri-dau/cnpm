@@ -1,8 +1,18 @@
 const express = require('express');
-const { Sequelize, DataTypes } = require('sequelize');
+const multer = require('multer');
+const path = require('path');
+const fs = require('fs');
 const app = express();
 
+const authController = require('./controllers/authController');
+const postController = require('./controllers/postController');
+
+const Post = require("./models/Post");
+const User = require("./models/User");
+const sequelize = require("./config/database");
+
 app.use(express.json());
+app.use('/uploads', express.static('uploads'));
 app.use((req, res, next) => {
     res.setHeader('Access-Control-Allow-Origin', '*');
     res.setHeader('Access-Control-Allow-Methods', 'GET, POST, PUT, DELETE');
@@ -10,294 +20,166 @@ app.use((req, res, next) => {
     next();
 });
 
-const sequelize = new Sequelize('web_trang_thong_tin', 'root', '', {
-    host: 'localhost',
-    dialect: 'mysql'
-});
-
-const User = sequelize.define('User', {
-    userid: {
-        type: DataTypes.INTEGER,
-        primaryKey: true,
-        autoIncrement: true
-    },
-    username: {
-        type: DataTypes.STRING,
-        allowNull: false,
-        unique: true
-    },
-    email: {
-        type: DataTypes.STRING,
-        allowNull: false,
-        unique: true,
-        validate: {
-            isEmail: true
+const storage = multer.diskStorage({
+    destination: (req, file, cb) => {
+        const uploadDir = 'uploads/';
+        if (!fs.existsSync(uploadDir)) {
+            fs.mkdirSync(uploadDir, { recursive: true });
         }
+        cb(null, uploadDir);
     },
-    password: {
-        type: DataTypes.STRING,
-        allowNull: false
-    }
-}, {
-    tableName: 'users',
-    timestamps: true
-});
-
-const Post = sequelize.define('Post', {
-    postid: {
-        type: DataTypes.INTEGER,
-        primaryKey: true,
-        autoIncrement: true
-    },
-    title: {
-        type: DataTypes.STRING,
-        allowNull: false
-    },
-    nd: {
-        type: DataTypes.TEXT,
-        allowNull: false
-    },
-    authorId: {
-        type: DataTypes.INTEGER,
-        allowNull: false,
-        references: {
-            model: User,
-            key: 'userid'
-        }
-    },
-    createdAt: {
-        type: DataTypes.DATE,
-        defaultValue: Sequelize.NOW
-    }
-}, {
-    tableName: 'post',
-    timestamps: true,
-    updatedAt: false
-});
-
-User.hasMany(Post, { foreignKey: 'authorId' });
-Post.belongsTo(User, { foreignKey: 'authorId', as: 'author' });
-
-// tạo tài khoản
-app.post('/api/register', async (req, res) => {
-    try {
-        const { username, email, password } = req.body;
-        
-        const user = await User.create({
-            username,
-            email,
-            password
-        });
-
-        res.status(201).json({ 
-            message: 'Đăng ký thành công',
-            userId: user.userid 
-        });
-    } catch (error) {
-        console.error('Registration error:', error);
-        if (error.name === 'SequelizeUniqueConstraintError') {
-            res.status(400).json({ error: 'Email hoặc tên người dùng đã tồn tại' });
-        } else {
-            res.status(500).json({ error: 'Lỗi server' });
-        }
+    filename: (req, file, cb) => {
+        cb(null, Date.now() + path.extname(file.originalname));
     }
 });
 
-// đăng nhập
-app.post('/api/login', async (req, res) => {
-    try {
-        const { username, password } = req.body;
-        
-        const user = await User.findOne({ where: { username } });
-        if (!user) {
-            return res.status(401).json({ error: 'Tên đăng nhập hoặc mật khẩu không đúng' });
-        }
-        
-        if (password !== user.password) {
-            return res.status(401).json({ error: 'Tên đăng nhập hoặc mật khẩu không đúng' });
-        }
-        
-        res.json({ 
-            message: 'Đăng nhập thành công',
-            user: {
-                id: user.userid,
-                username: user.username,
-                email: user.email
-            }
-        });
-    } catch (error) {
-        console.error('Login error:', error);
-        res.status(500).json({ error: 'Lỗi server' });
+// Image upload filter
+const imageFilter = (req, file, cb) => {
+    if (file.mimetype.startsWith('image/')) {
+        cb(null, true);
+    } else {
+        cb(new Error('Only image uploads are allowed'), false);
     }
+};
+
+const upload = multer({
+    storage: storage,
+    fileFilter: imageFilter,
+    limits: { fileSize: 5 * 1024 * 1024 } // 5MB file size limit
 });
 
-// hiện thị bài viết tại trang đăng nhập
-app.get('/api/posts', async (req, res) => {
-    try {
-        const posts = await Post.findAll({
-            include: [{
-                model: User,
-                as: 'author',
-                attributes: ['username']
-            }],
-            order: [['createdAt', 'DESC']]
-        });
-        res.json(posts);
-    } catch (error) {
-        console.error('Error:', error);
-        res.status(500).json({ error: 'Lỗi server' });
+// Validation function for post content
+const validatePostContent = (title, content) => {
+    if (!title || title.trim().length < 5) {
+        return 'Title must be at least 5 characters long';
     }
-});
-
-// hiển thị bài viết chi tiết
-app.get('/api/posts/:id', async (req, res) => {
-    try {
-        const postId = req.params.id;
-        const post = await Post.findOne({
-            where: { postid: postId },
-            include: [{
-                model: User,
-                as: 'author',
-                attributes: ['username']
-            }]
-        });
-        
-        if (!post) {
-            return res.status(404).json({ error: 'Không tìm thấy bài viết' });
-        }
-        
-        res.json(post);
-    } catch (error) {
-        console.error('Error:', error);
-        res.status(500).json({ error: 'Lỗi server' });
+    if (!content || content.trim().length < 10) {
+        return 'Content must be at least 10 characters long';
     }
-});
+    return null;
+};
 
-// tạo bài viết
-app.post('/api/posts', async (req, res) => {
+// Authentication routes
+app.post('/api/register', authController.register);
+app.post('/api/login', authController.login);
+
+// Post routes
+app.get('/api/posts', postController.getAllPosts);
+app.get('/api/posts/:id', postController.getPostById);
+
+// Create post route with additional server-level validation
+app.post('/api/posts', upload.array('images', 5), async (req, res) => {
     try {
         const { title, nd, authorId } = req.body;
-        
-        if (!title || !nd || !authorId) {
-            return res.status(400).json({ 
-                error: 'Tiêu đề, nội dung và tác giả không được để trống' 
-            });
+
+        // Validate post content
+        const validationError = validatePostContent(title, nd);
+        if (validationError) {
+            // Clean up uploaded files if validation fails
+            if (req.files) {
+                req.files.forEach(file => {
+                    if (fs.existsSync(file.path)) {
+                        fs.unlinkSync(file.path);
+                    }
+                });
+            }
+            return res.status(400).json({ error: validationError });
         }
 
-        const post = await Post.create({
-            title,
-            nd,
-            authorId
-        });
+        // Attach files to the request for the controller to handle
+        req.uploadedFiles = req.files || [];
 
-        const postWithAuthor = await Post.findOne({
-            where: { postid: post.postid },
-            include: [{
-                model: User,
-                as: 'author',
-                attributes: ['username']
-            }]
-        });
-
-        res.status(201).json({
-            message: 'Tạo bài viết thành công',
-            post: postWithAuthor
-        });
+        // Use the controller method
+        return postController.createPost(req, res);
     } catch (error) {
         console.error('Error creating post:', error);
-        res.status(500).json({ error: 'Lỗi server' });
+        res.status(500).json({ error: 'Server error' });
     }
 });
 
-// Cập nhật bài viết
-app.put('/api/posts/:id', async (req, res) => {
+// Update post route
+app.put('/api/posts/:id', upload.array('images', 5), async (req, res) => {
     try {
-        const postId = req.params.id;
-        const { title, nd, authorId } = req.body;
-        
-        // Kiểm tra bài viết tồn tại
-        const post = await Post.findOne({ 
-            where: { 
-                postid: postId
+        // Validate post content
+        const { title, nd } = req.body;
+        const validationError = validatePostContent(title, nd);
+        if (validationError) {
+            // Clean up uploaded files if validation fails
+            if (req.files) {
+                req.files.forEach(file => {
+                    if (fs.existsSync(file.path)) {
+                        fs.unlinkSync(file.path);
+                    }
+                });
             }
-        });
-        
-        if (!post) {
-            return res.status(404).json({ error: 'Không tìm thấy bài viết' });
+            return res.status(400).json({ error: validationError });
         }
-        
-        // Kiểm tra quyền chỉnh sửa
-        if (post.authorId !== authorId) {
-            return res.status(403).json({ error: 'Bạn không có quyền chỉnh sửa bài viết này' });
-        }
-        
-        // Cập nhật bài viết
-        await post.update({
-            title,
-            nd
-        });
-        
-        // Lấy bài viết đã cập nhật kèm thông tin tác giả
-        const updatedPost = await Post.findOne({
-            where: { postid: postId },
-            include: [{
-                model: User,
-                as: 'author',
-                attributes: ['username']
-            }]
-        });
-        
-        res.json({
-            message: 'Cập nhật bài viết thành công',
-            post: updatedPost
-        });
+
+        req.uploadedFiles = req.files || [];
+
+        // Use the controller method
+        return postController.updatePost(req, res);
     } catch (error) {
         console.error('Error updating post:', error);
-        res.status(500).json({ error: 'Lỗi server' });
+        res.status(500).json({ error: 'Server error' });
     }
 });
 
-// Xóa bài viết
-app.delete('/api/posts/:id', async (req, res) => {
+// Delete post route
+app.delete('/api/posts/:id', postController.deletePost);
+
+// Delete post images route
+app.delete('/api/posts/:id/images', async (req, res) => {
     try {
         const postId = req.params.id;
-        const { authorId } = req.body;
-        
-        // Kiểm tra bài viết tồn tại
-        const post = await Post.findOne({ 
-            where: { 
-                postid: postId
+        const { imagesToDelete, authorId } = req.body;
+
+        const post = await Post.findOne({
+            where: { postid: postId }
+        });
+
+        if (!post) {
+            return res.status(404).json({ error: 'Post not found' });
+        }
+
+        if (post.authorId !== Number(authorId)) {
+            return res.status(403).json({ error: 'You do not have permission to edit this post' });
+        }
+
+        // Get current images
+        const existingImages = post.images ? JSON.parse(post.images) : [];
+
+        // Remove files from filesystem
+        imagesToDelete.forEach(imagePath => {
+            if (fs.existsSync(imagePath)) {
+                fs.unlinkSync(imagePath);
             }
         });
-        
-        if (!post) {
-            return res.status(404).json({ error: 'Không tìm thấy bài viết' });
-        }
-        
-        // Kiểm tra quyền xóa
-        if (post.authorId !== authorId) {
-            return res.status(403).json({ error: 'Bạn không có quyền xóa bài viết này' });
-        }
-        
-        // Xóa bài viết
-        await post.destroy();
-        
+
+        // Filter out deleted images
+        const remainingImages = existingImages.filter(img => !imagesToDelete.includes(img));
+
+        // Update post
+        await post.update({
+            images: remainingImages.length > 0 ? JSON.stringify(remainingImages) : null
+        });
+
         res.json({
-            message: 'Xóa bài viết thành công'
+            message: 'Images deleted successfully',
+            remainingImages
         });
     } catch (error) {
-        console.error('Error deleting post:', error);
-        res.status(500).json({ error: 'Lỗi server' });
+        console.error('Error deleting images:', error);
+        res.status(500).json({ error: 'Server error' });
     }
 });
 
-// khởi tạo server
 const PORT = 5000;
 async function startServer() {
     try {
         await sequelize.authenticate();
         console.log('Database connected!');
-        
+
         await sequelize.sync({ alter: true });
         console.log('Tables synchronized!');
 

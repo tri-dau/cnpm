@@ -2,6 +2,125 @@ import React, { useState, useEffect } from "react";
 import { useParams, Link, useNavigate } from "react-router-dom";
 import "./PostDetail.css";
 
+function PostImage({ imageData }) {
+  if (!imageData) return null;
+
+  // Handle base64 or file path images
+  const imageSrc = imageData.startsWith('data:') 
+    ? imageData 
+    : `data:image/jpeg;base64,${imageData}`;
+
+  return (
+    <div>
+      <img
+        src={imageSrc}
+        alt="Post content"
+        onError={(e) => {
+          e.target.style.display = 'none';
+          console.error('Failed to load image');
+        }}
+        style={{ maxWidth: '100%', height: 'auto' }}
+      />
+    </div>
+  );
+}
+
+function EditForm({ 
+  editedTitle, 
+  setEditedTitle, 
+  editedContent, 
+  setEditedContent, 
+  handleImageUpload,
+  handleSaveEdit,
+  handleCancelEdit,
+  existingImage,
+  selectedImage,
+  handleRemoveImage
+}) {
+  const [previewImage, setPreviewImage] = useState(null);
+
+  useEffect(() => {
+    // Create preview for selected image
+    if (selectedImage) {
+      const reader = new FileReader();
+      reader.onloadend = () => {
+        setPreviewImage(reader.result);
+      };
+      reader.readAsDataURL(selectedImage);
+    } else {
+      setPreviewImage(null);
+    }
+  }, [selectedImage]);
+
+  return (
+    <div>
+      <input
+        type="text"
+        value={editedTitle}
+        onChange={(e) => setEditedTitle(e.target.value)}
+        placeholder="Tiêu đề bài viết"
+      />
+      <textarea
+        value={editedContent}
+        onChange={(e) => setEditedContent(e.target.value)}
+        placeholder="Nội dung bài viết"
+      />
+      <div>
+        <input
+          type="file"
+          accept="image/*"
+          onChange={handleImageUpload}
+        />
+        {(existingImage || previewImage) && (
+          <div>
+            <PostImage imageData={previewImage || existingImage} />
+            <button onClick={handleRemoveImage} type="button">
+              Xóa ảnh
+            </button>
+          </div>
+        )}
+      </div>
+      <div>
+        <button onClick={handleSaveEdit}>
+          Lưu
+        </button>
+        <button onClick={handleCancelEdit}>
+          Hủy
+        </button>
+      </div>
+    </div>
+  );
+}
+
+function PostContent({ post, isAuthor, handleEdit, handleDelete }) {
+  return (
+    <>
+      <h1>{post.title}</h1>
+      <div>{post.nd}</div>
+      
+      {post.images && <PostImage imageData={post.images} />}
+
+      <div>
+        <p>Tác giả: {post.author.username}</p>
+        <div>
+          Đăng ngày: {new Date(post.createdAt).toLocaleDateString("vi-VN")}
+        </div>
+      </div>
+      
+      {isAuthor && (
+        <div>
+          <button onClick={handleEdit}>
+            Chỉnh sửa
+          </button>
+          <button onClick={handleDelete}>
+            Xóa
+          </button>
+        </div>
+      )}
+    </>
+  );
+}
+
 function PostDetail() {
   const [post, setPost] = useState(null);
   const [loading, setLoading] = useState(true);
@@ -9,6 +128,7 @@ function PostDetail() {
   const [isEditing, setIsEditing] = useState(false);
   const [editedTitle, setEditedTitle] = useState("");
   const [editedContent, setEditedContent] = useState("");
+  const [selectedImage, setSelectedImage] = useState(null);
   const [user, setUser] = useState(null);
   const { id } = useParams();
   const navigate = useNavigate();
@@ -41,26 +161,44 @@ function PostDetail() {
 
   const handleEdit = () => {
     setIsEditing(true);
+    setSelectedImage(null);
   };
 
   const handleCancelEdit = () => {
     setIsEditing(false);
     setEditedTitle(post.title);
     setEditedContent(post.nd);
+    setSelectedImage(null);
+  };
+
+  const handleImageUpload = (e) => {
+    if (e.target.files && e.target.files[0]) {
+      setSelectedImage(e.target.files[0]);
+    }
+  };
+
+  const handleRemoveImage = () => {
+    setSelectedImage(null);
   };
 
   const handleSaveEdit = async () => {
     try {
+      const formData = new FormData();
+      formData.append('title', editedTitle);
+      formData.append('nd', editedContent);
+      formData.append('authorId', user.id);
+
+      // Handle image upload or removal
+      if (selectedImage) {
+        formData.append('images', selectedImage);
+      } else if (!post.images) {
+        // If no new image and no existing image, don't append anything
+        formData.append('removeImage', 'true');
+      }
+
       const response = await fetch(`http://localhost:5000/api/posts/${id}`, {
         method: "PUT",
-        headers: {
-          "Content-Type": "application/json",
-        },
-        body: JSON.stringify({
-          title: editedTitle,
-          nd: editedContent,
-          authorId: user.id,
-        }),
+        body: formData,
       });
 
       if (!response.ok) {
@@ -71,6 +209,7 @@ function PostDetail() {
       const updatedPost = await response.json();
       setPost(updatedPost.post);
       setIsEditing(false);
+      setSelectedImage(null);
     } catch (error) {
       console.error("Error updating post:", error);
       setError(error.message || "Lỗi khi cập nhật bài viết");
@@ -106,76 +245,42 @@ function PostDetail() {
   const isAuthor = user && post && user.id === post.authorId;
 
   return (
-    <div className="post-detail-container">
-      <header className="post-detail-header">
-        <div className="header-content">
-          <Link to="/" className="back-button">
-            Trở về trang chủ
-          </Link>
-        </div>
+    <div>
+      <header>
+        <Link to="/">Trở về trang chủ</Link>
       </header>
 
-      <main className="post-detail-main">
+      <main>
         {loading ? (
-          <div className="loading-container">
-            <div className="spinner"></div>
-          </div>
+          <div>Đang tải...</div>
         ) : error ? (
-          <div className="error-message">{error}</div>
+          <div>{error}</div>
         ) : post ? (
-          <article className="post-detail-content">
+          <article>
             {isEditing ? (
-              // Form chỉnh sửa
-              <div className="edit-form">
-                <input
-                  type="text"
-                  value={editedTitle}
-                  onChange={(e) => setEditedTitle(e.target.value)}
-                  className="edit-title-input"
-                  placeholder="Tiêu đề bài viết"
-                />
-                <textarea
-                  value={editedContent}
-                  onChange={(e) => setEditedContent(e.target.value)}
-                  className="edit-content-input"
-                  placeholder="Nội dung bài viết"
-                />
-                <div className="edit-buttons">
-                  <button onClick={handleSaveEdit} className="save-button">
-                    Lưu
-                  </button>
-                  <button onClick={handleCancelEdit} className="cancel-button">
-                    Hủy
-                  </button>
-                </div>
-              </div>
+              <EditForm
+                editedTitle={editedTitle}
+                setEditedTitle={setEditedTitle}
+                editedContent={editedContent}
+                setEditedContent={setEditedContent}
+                handleImageUpload={handleImageUpload}
+                handleSaveEdit={handleSaveEdit}
+                handleCancelEdit={handleCancelEdit}
+                existingImage={post.images}
+                selectedImage={selectedImage}
+                handleRemoveImage={handleRemoveImage}
+              />
             ) : (
-              // Hiển thị bài viết
-              <>
-                <h1 className="post-detail-title">{post.title}</h1>
-                <div className="post-detail-body">{post.nd}</div>
-                <div className="post-metadata">
-                  <p className="post-author">Tác giả: {post.author.username}</p>
-                  <div className="post-detail-date">
-                    Đăng ngày:{" "}
-                    {new Date(post.createdAt).toLocaleDateString("vi-VN")}
-                  </div>
-                </div>
-                {isAuthor && (
-                  <div className="post-actions">
-                    <button onClick={handleEdit} className="edit-button">
-                      Chỉnh sửa
-                    </button>
-                    <button onClick={handleDelete} className="delete-button">
-                      Xóa
-                    </button>
-                  </div>
-                )}
-              </>
+              <PostContent
+                post={post}
+                isAuthor={isAuthor}
+                handleEdit={handleEdit}
+                handleDelete={handleDelete}
+              />
             )}
           </article>
         ) : (
-          <div className="error-message">Không tìm thấy bài viết</div>
+          <div>Không tìm thấy bài viết</div>
         )}
       </main>
     </div>
