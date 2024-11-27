@@ -20,6 +20,32 @@ VN : Sử dụng lệnh này để chạy react app
  - `cd src`
  - `node server.js`
 
+### NOTE : Trong file server.js có hàm  
+```javascript
+async function startServer() {
+    try {
+        await sequelize.authenticate();
+        console.log('Database connected!');
+
+        // TÍNH NĂNG ĐỒNG BỘ VỚI DB (CHỈ BẬT LÊN KHI CÓ THAY ĐỔI QUAN TRỌNG)
+        await sequelize.sync({ alter: false });
+        console.log('Tables synchronized!');
+
+        app.listen(PORT, () => {
+            console.log(`Server running on port ${PORT}`);
+        });
+    } catch (error) {
+        console.error('Error starting server:', error);
+    }
+}
+```
+Trong đó quan trọng là dòng
+```javascript
+await sequelize.sync({ alter: false });
+```   
+
+
+# CHỈ CHỈNH THÀNH TRUE KHI CÓ THAY ĐỔI QUAN TRỌNG VỚI DB (tạo mới bảng hoặc cột, thay đổi cột)
 ## Learn More
 
 You can learn more in the [Create React App documentation](https://facebook.github.io/create-react-app/docs/getting-started).
