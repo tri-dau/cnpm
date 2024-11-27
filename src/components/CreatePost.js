@@ -5,14 +5,14 @@ import './CreatePost.css';
 function CreatePost() {
   const [title, setTitle] = useState('');
   const [content, setContent] = useState('');
-  const [images, setImages] = useState([]);
-  const [previews, setPreviews] = useState([]);
+  const [image, setImage] = useState(null);
+  const [preview, setPreview] = useState(null);
   const [error, setError] = useState('');
   const [isSubmitting, setIsSubmitting] = useState(false);
   const fileInputRef = useRef(null);
   const navigate = useNavigate();
 
-  // Kiểm tra trạng thái đăng nhập khi component mount
+  // Check login status when component mounts
   useEffect(() => {
     const user = JSON.parse(localStorage.getItem('user'));
     if (!user) {
@@ -20,48 +20,37 @@ function CreatePost() {
     }
   }, [navigate]);
 
-  // Xử lý chọn hình ảnh
+  // Handle image selection
   const handleImageChange = (e) => {
-    const selectedFiles = Array.from(e.target.files);
-    
-    // Kiểm tra số lượng ảnh
-    if (selectedFiles.length + images.length > 5) {
-      setError('Chỉ được tải lên tối đa 5 hình ảnh');
-      return;
-    }
+    const selectedFile = e.target.files[0];
 
-    // Kiểm tra kích thước và loại file
-    const validFiles = selectedFiles.filter(file => {
-      if (file.size > 15 * 1024 * 1024) {
-        setError('Mỗi hình ảnh không được vượt quá 15MB');
-        return false;
+    // Validate file
+    if (selectedFile) {
+      // Check file size (15MB limit)
+      if (selectedFile.size > 15 * 1024 * 1024) {
+        setError('Hình ảnh không được vượt quá 15MB');
+        return;
       }
-      if (!file.type.startsWith('image/')) {
+
+      // Check file type
+      if (!selectedFile.type.startsWith('image/')) {
         setError('Chỉ được tải lên các tệp hình ảnh');
-        return false;
+        return;
       }
-      return true;
-    });
 
-    // Tạo URL preview cho các file hợp lệ
-    const newPreviews = validFiles.map(file => URL.createObjectURL(file));
-    
-    setImages(prevImages => [...prevImages, ...validFiles]);
-    setPreviews(prevPreviews => [...prevPreviews, ...newPreviews]);
-    
-    // Reset error nếu không có lỗi
-    setError('');
+      // Set image and create preview
+      setImage(selectedFile);
+      setPreview(URL.createObjectURL(selectedFile));
+      setError('');
+    }
   };
 
-  // Xóa ảnh khỏi danh sách
-  const removeImage = (index) => {
-    const newImages = images.filter((_, i) => i !== index);
-    const newPreviews = previews.filter((_, i) => i !== index);
-    
-    setImages(newImages);
-    setPreviews(newPreviews);
-    
-    // Reset file input để có thể chọn lại file đã xóa
+  // Remove selected image
+  const removeImage = () => {
+    setImage(null);
+    setPreview(null);
+
+    // Reset file input
     if (fileInputRef.current) {
       fileInputRef.current.value = '';
     }
@@ -69,13 +58,19 @@ function CreatePost() {
 
   const handleSubmit = async (e) => {
     e.preventDefault();
-    
-    if (!title.trim() || !content.trim()) {
-      setError('Vui lòng điền đầy đủ thông tin');
+
+    // Validate form fields
+    if (!title.trim()) {
+      setError('Vui lòng nhập tiêu đề');
       return;
     }
 
-    // Lấy thông tin user từ localStorage
+    if (!content.trim()) {
+      setError('Vui lòng nhập nội dung');
+      return;
+    }
+
+    // Validate user authentication
     const user = JSON.parse(localStorage.getItem('user'));
     if (!user || !user.id) {
       setError('Vui lòng đăng nhập để tạo bài viết');
@@ -87,21 +82,20 @@ function CreatePost() {
     setError('');
 
     try {
-      // Tạo FormData để gửi cả text và files
+      // Create FormData to send text and image
       const formData = new FormData();
       formData.append('title', title.trim());
       formData.append('nd', content.trim());
       formData.append('authorId', user.id);
-      
-      // Thêm các file ảnh vào FormData
-      images.forEach((image, index) => {
-        formData.append('images', image);
-      });
+
+      // Add image to FormData if selected
+      if (image) {
+        formData.append('image', image);
+      }
 
       const response = await fetch('http://localhost:5000/api/posts', {
         method: 'POST',
         body: formData,
-        // Không cần set Content-Type header, nó sẽ tự động được set với boundary cho multipart/form-data
       });
 
       if (!response.ok) {
@@ -111,10 +105,12 @@ function CreatePost() {
 
       const result = await response.json();
       console.log('Bài viết đã được tạo:', result);
-      
-      // Giải phóng bộ nhớ cho các preview URL
-      previews.forEach(URL.revokeObjectURL);
-      
+
+      // Revoke preview URL if exists
+      if (preview) {
+        URL.revokeObjectURL(preview);
+      }
+
       navigate('/');
     } catch (err) {
       setError(err.message);
@@ -127,7 +123,7 @@ function CreatePost() {
     <div className="create-post-container">
       <form onSubmit={handleSubmit} className="create-post-form">
         <h2 className="form-title">Tạo bài viết mới</h2>
-        
+
         <div className="form-group">
           <label htmlFor="title" className="form-label">Tiêu đề</label>
           <input
@@ -153,58 +149,46 @@ function CreatePost() {
         </div>
 
         <div className="form-group">
-          <label className="form-label">Hình ảnh (tối đa 5 ảnh)</label>
-          <input 
-            type="file" 
+          <label className="form-label">Hình ảnh (tối đa 1 ảnh)</label>
+          <input
+            type="file"
             ref={fileInputRef}
-            accept="image/*" 
-            multiple 
-            onChange={handleImageChange} 
+            accept="image/*"
+            onChange={handleImageChange}
             className="form-input"
           />
-          
-          {previews.length > 0 && (
-            <div className="image-preview-container" style={{ 
-              display: 'flex', 
-              flexWrap: 'wrap', 
-              gap: '10px', 
-              marginTop: '10px' 
+
+          {preview && (
+            <div style={{
+              display: 'flex',
+              alignItems: 'center',
+              gap: '10px',
+              marginTop: '10px'
             }}>
-              {previews.map((preview, index) => (
-                <div key={index} style={{ position: 'relative' }}>
-                  <img 
-                    src={preview} 
-                    alt={`Preview ${index}`} 
-                    style={{ 
-                      width: '100px', 
-                      height: '100px', 
-                      objectFit: 'cover', 
-                      borderRadius: '4px' 
-                    }} 
-                  />
-                  <button 
-                    type="button"
-                    onClick={() => removeImage(index)}
-                    style={{
-                      position: 'absolute',
-                      top: '0',
-                      right: '0',
-                      background: 'red',
-                      color: 'white',
-                      border: 'none',
-                      borderRadius: '50%',
-                      width: '20px',
-                      height: '20px',
-                      display: 'flex',
-                      alignItems: 'center',
-                      justifyContent: 'center',
-                      cursor: 'pointer'
-                    }}
-                  >
-                    ✕
-                  </button>
-                </div>
-              ))}
+              <img
+                src={preview}
+                alt="Preview"
+                style={{
+                  width: '100px',
+                  height: '100px',
+                  objectFit: 'cover',
+                  borderRadius: '4px'
+                }}
+              />
+              <button
+                type="button"
+                onClick={removeImage}
+                style={{
+                  background: 'red',
+                  color: 'white',
+                  border: 'none',
+                  borderRadius: '4px',
+                  padding: '5px 10px',
+                  cursor: 'pointer'
+                }}
+              >
+                Xóa ảnh
+              </button>
             </div>
           )}
         </div>

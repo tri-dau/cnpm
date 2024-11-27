@@ -12,7 +12,10 @@ const User = require("./models/User");
 const sequelize = require("./config/database");
 
 app.use(express.json());
-app.use('/uploads', express.static('uploads'));
+
+// Sửa lại đường dẫn để phục vụ các file tĩnh từ thư mục uploads
+app.use('/uploads', express.static(path.join(__dirname, '..', 'public', 'uploads'))); // Thêm '..' để đi ra ngoài thư mục src
+
 app.use((req, res, next) => {
     res.setHeader('Access-Control-Allow-Origin', '*');
     res.setHeader('Access-Control-Allow-Methods', 'GET, POST, PUT, DELETE');
@@ -20,20 +23,25 @@ app.use((req, res, next) => {
     next();
 });
 
+// Cấu hình multer để lưu file vào thư mục uploads (ở thư mục public)
 const storage = multer.diskStorage({
     destination: (req, file, cb) => {
-        const uploadDir = 'uploads/';
+        // Đường dẫn tuyệt đối đến thư mục public/uploads (ra ngoài thư mục src)
+        const uploadDir = path.join(__dirname, '..', 'public', 'uploads');  // Thêm '..' để đi ra ngoài src
+
+        // Kiểm tra xem thư mục uploads đã tồn tại chưa, nếu chưa thì tạo mới
         if (!fs.existsSync(uploadDir)) {
-            fs.mkdirSync(uploadDir, { recursive: true });
+            return cb(new Error('Upload directory does not exist'), false);
         }
+
         cb(null, uploadDir);
     },
     filename: (req, file, cb) => {
-        cb(null, Date.now() + path.extname(file.originalname));
+        // Tạo tên file duy nhất bằng cách thêm timestamp
+        cb(null, `${Date.now()}-${file.originalname}`);
     }
 });
 
-// Image upload filter
 const imageFilter = (req, file, cb) => {
     if (file.mimetype.startsWith('image/')) {
         cb(null, true);
@@ -45,10 +53,9 @@ const imageFilter = (req, file, cb) => {
 const upload = multer({
     storage: storage,
     fileFilter: imageFilter,
-    limits: { fileSize: 5 * 1024 * 1024 } // 5MB file size limit
+    limits: { fileSize: 15 * 1024 * 1024 } // Giới hạn kích thước file là 15MB
 });
 
-// Validation function for post content
 const validatePostContent = (title, content) => {
     if (!title || title.trim().length < 5) {
         return 'Title must be at least 5 characters long';
@@ -67,29 +74,23 @@ app.post('/api/login', authController.login);
 app.get('/api/posts', postController.getAllPosts);
 app.get('/api/posts/:id', postController.getPostById);
 
-// Create post route with additional server-level validation
-app.post('/api/posts', upload.array('images', 5), async (req, res) => {
+app.post('/api/posts', upload.single('image'), async (req, res) => {
     try {
         const { title, nd, authorId } = req.body;
 
         // Validate post content
         const validationError = validatePostContent(title, nd);
         if (validationError) {
-            // Clean up uploaded files if validation fails
-            if (req.files) {
-                req.files.forEach(file => {
-                    if (fs.existsSync(file.path)) {
-                        fs.unlinkSync(file.path);
-                    }
-                });
+            if (req.file) {
+                // Nếu có file ảnh, xóa nó nếu có lỗi
+                if (fs.existsSync(req.file.path)) {
+                    fs.unlinkSync(req.file.path);
+                }
             }
             return res.status(400).json({ error: validationError });
         }
 
-        // Attach files to the request for the controller to handle
-        req.uploadedFiles = req.files || [];
-
-        // Use the controller method
+        req.files = req.file ? [req.file] : [];
         return postController.createPost(req, res);
     } catch (error) {
         console.error('Error creating post:', error);
@@ -97,27 +98,22 @@ app.post('/api/posts', upload.array('images', 5), async (req, res) => {
     }
 });
 
-// Update post route
-app.put('/api/posts/:id', upload.array('images', 5), async (req, res) => {
+app.put('/api/posts/:id', upload.single('image'), async (req, res) => {
     try {
-        // Validate post content
         const { title, nd } = req.body;
         const validationError = validatePostContent(title, nd);
         if (validationError) {
-            // Clean up uploaded files if validation fails
-            if (req.files) {
-                req.files.forEach(file => {
-                    if (fs.existsSync(file.path)) {
-                        fs.unlinkSync(file.path);
-                    }
-                });
+            if (req.file) {
+                // Nếu có file ảnh, xóa nó nếu có lỗi
+                if (fs.existsSync(req.file.path)) {
+                    fs.unlinkSync(req.file.path);
+                }
             }
             return res.status(400).json({ error: validationError });
         }
 
-        req.uploadedFiles = req.files || [];
+        req.files = req.file ? [req.file] : [];
 
-        // Use the controller method
         return postController.updatePost(req, res);
     } catch (error) {
         console.error('Error updating post:', error);
@@ -125,54 +121,7 @@ app.put('/api/posts/:id', upload.array('images', 5), async (req, res) => {
     }
 });
 
-// Delete post route
 app.delete('/api/posts/:id', postController.deletePost);
-
-// Delete post images route
-app.delete('/api/posts/:id/images', async (req, res) => {
-    try {
-        const postId = req.params.id;
-        const { imagesToDelete, authorId } = req.body;
-
-        const post = await Post.findOne({
-            where: { postid: postId }
-        });
-
-        if (!post) {
-            return res.status(404).json({ error: 'Post not found' });
-        }
-
-        if (post.authorId !== Number(authorId)) {
-            return res.status(403).json({ error: 'You do not have permission to edit this post' });
-        }
-
-        // Get current images
-        const existingImages = post.images ? JSON.parse(post.images) : [];
-
-        // Remove files from filesystem
-        imagesToDelete.forEach(imagePath => {
-            if (fs.existsSync(imagePath)) {
-                fs.unlinkSync(imagePath);
-            }
-        });
-
-        // Filter out deleted images
-        const remainingImages = existingImages.filter(img => !imagesToDelete.includes(img));
-
-        // Update post
-        await post.update({
-            images: remainingImages.length > 0 ? JSON.stringify(remainingImages) : null
-        });
-
-        res.json({
-            message: 'Images deleted successfully',
-            remainingImages
-        });
-    } catch (error) {
-        console.error('Error deleting images:', error);
-        res.status(500).json({ error: 'Server error' });
-    }
-});
 
 const PORT = 5000;
 async function startServer() {
@@ -180,7 +129,8 @@ async function startServer() {
         await sequelize.authenticate();
         console.log('Database connected!');
 
-        await sequelize.sync({ alter: true });
+        // TÍNH NĂNG ĐỒNG BỘ VỚI DB (CHỈ BẬT LÊN KHI CÓ THAY ĐỔI QUAN TRỌNG)
+        await sequelize.sync({ alter: false });
         console.log('Tables synchronized!');
 
         app.listen(PORT, () => {

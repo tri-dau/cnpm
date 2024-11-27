@@ -1,6 +1,7 @@
 const Post = require('../models/Post');
 const User = require('../models/User');
 const fs = require('fs');
+const path = require('path');
 
 const getAllPosts = async (req, res) => {
     try {
@@ -12,6 +13,7 @@ const getAllPosts = async (req, res) => {
             }],
             order: [['createdAt', 'DESC']]
         });
+
         res.json(posts);
     } catch (error) {
         console.error('Error:', error);
@@ -34,13 +36,7 @@ const getPostById = async (req, res) => {
             return res.status(404).json({ error: 'Không tìm thấy bài viết' });
         }
 
-        // Convert BLOB to base64 for frontend display
-        const responsePost = post.toJSON();
-        if (responsePost.images) {
-            responsePost.images = responsePost.images.toString('base64');
-        }
-
-        res.json(responsePost);
+        res.json(post);
     } catch (error) {
         console.error('Error:', error);
         res.status(500).json({ error: 'Lỗi server' });
@@ -57,18 +53,18 @@ const createPost = async (req, res) => {
             });
         }
 
-        let imageBuffer = null;
+        let imagePath = null;
+
+        // Handle single image upload
         if (req.files && req.files.length > 0) {
-            imageBuffer = fs.readFileSync(req.files[0].path);
-            // Clean up uploaded file
-            fs.unlinkSync(req.files[0].path);
+            imagePath = req.files[0].filename;
         }
 
         const post = await Post.create({
             title,
             nd,
             authorId,
-            images: imageBuffer
+            images: imagePath
         });
 
         const postWithAuthor = await Post.findOne({
@@ -80,15 +76,9 @@ const createPost = async (req, res) => {
             }]
         });
 
-        // Convert BLOB to base64 for response
-        const responsePost = postWithAuthor.toJSON();
-        if (responsePost.images) {
-            responsePost.images = responsePost.images.toString('base64');
-        }
-
         res.status(201).json({
             message: 'Tạo bài viết thành công',
-            post: responsePost
+            post: postWithAuthor
         });
     } catch (error) {
         console.error('Error creating post:', error);
@@ -113,16 +103,23 @@ const updatePost = async (req, res) => {
             return res.status(403).json({ error: 'Bạn không có quyền chỉnh sửa bài viết này' });
         }
 
-        let imageBuffer = post.images;
+        // Remove old image if a new one is uploaded
         if (req.files && req.files.length > 0) {
-            imageBuffer = fs.readFileSync(req.files[0].path);
-            fs.unlinkSync(req.files[0].path);
+            // Delete the old image file if it exists
+            if (post.images) {
+                const oldImagePath = path.join('uploads', post.images);
+                if (fs.existsSync(oldImagePath)) {
+                    fs.unlinkSync(oldImagePath);
+                }
+            }
         }
 
+        // Update the post
         await post.update({
             title,
             nd,
-            images: imageBuffer
+            // Use new image filename if uploaded, otherwise keep existing
+            images: req.files && req.files.length > 0 ? req.files[0].filename : post.images
         });
 
         const updatedPost = await Post.findOne({
@@ -134,15 +131,9 @@ const updatePost = async (req, res) => {
             }]
         });
 
-        // Convert BLOB to base64 for response
-        const responsePost = updatedPost.toJSON();
-        if (responsePost.images) {
-            responsePost.images = responsePost.images.toString('base64');
-        }
-
         res.json({
             message: 'Cập nhật bài viết thành công',
-            post: responsePost
+            post: updatedPost
         });
     } catch (error) {
         console.error('Error updating post:', error);
@@ -165,6 +156,14 @@ const deletePost = async (req, res) => {
 
         if (post.authorId !== parseInt(authorId)) {
             return res.status(403).json({ error: 'Bạn không có quyền xóa bài viết này' });
+        }
+
+        // Delete the associated image if it exists
+        if (post.images) {
+            const fullPath = path.join('uploads', post.images);
+            if (fs.existsSync(fullPath)) {
+                fs.unlinkSync(fullPath);
+            }
         }
 
         await post.destroy();

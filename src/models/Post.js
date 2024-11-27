@@ -17,13 +17,9 @@ const Post = sequelize.define('Post', {
         allowNull: false
     },
     images: {
-        type: DataTypes.BLOB('long'),
+        type: DataTypes.STRING,
         allowNull: true,
         defaultValue: null,
-        get() {
-            const rawValue = this.getDataValue('images');
-            return rawValue ? rawValue.toString('base64') : null;
-        }
     },
     authorId: {
         type: DataTypes.INTEGER,
