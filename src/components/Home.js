@@ -65,12 +65,6 @@ function Home() {
               </>
             ) : (
               <>
-                <Link to="/login" className="login-button outlined">
-                  Đăng nhập
-                </Link>
-                <Link to="/register" className="login-button contained">
-                  Đăng ký
-                </Link>
               </>
             )}
           </div>
@@ -99,8 +93,8 @@ function Home() {
                     <article>
                       <div className="post-image-container">
                         <img
-                          src={`http://localhost:5000/uploads/${post.images}`|| "placeholder-image.jpg"}
-                          alt="No image for this post :("
+                          src={post.images ? `http://localhost:5000/uploads/${post.images}` : "https://picsum.photos/1000?random=1"}
+                          alt={post.images ? "Image for this post" : "No image for this post :("}
                           className="post-image"
                         />
                       </div>
