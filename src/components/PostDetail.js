@@ -1,6 +1,7 @@
 import React, { useState, useEffect } from "react";
 import { useParams, Link, useNavigate } from "react-router-dom";
 import "./PostDetail.css";
+import ReactMarkdown from 'react-markdown';
 
 function PostDetail() {
   const [post, setPost] = useState(null);
@@ -162,7 +163,7 @@ function PostDetail() {
                   </div>
                 )}
                 <br></br>
-                <div className="post-detail-body">{post.nd}</div>
+                <ReactMarkdown className="post-detail-body">{post.nd}</ReactMarkdown>
                 <div className="post-metadata">
                   <p className="post-author">Tác giả: {post.author.username}</p>
                   <div className="post-detail-date">

@@ -3,6 +3,7 @@ import { Link, useNavigate } from "react-router-dom";
 import "./styles.css";
 import "./Home.css";
 import CreatePostButton from "./CreatePostButton";
+import ReactMarkdown from 'react-markdown';
 
 function Home() {
   const [posts, setPosts] = useState([]);
@@ -100,11 +101,11 @@ function Home() {
                       </div>
                       <div style={{ padding: "1rem" }}>
                         <h2 className="post-title">{post.title}</h2>
-                        <p className="post-description">
+                        <ReactMarkdown className="post-description">
                           {post.nd.length > 150
                             ? `${post.nd.substring(0, 150)}...`
                             : post.nd}
-                        </p>
+                        </ReactMarkdown>
                         <div className="post-metadata">
                           <p className="post-author">
                             Tác giả: {post.author.username}
