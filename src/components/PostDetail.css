@@ -57,6 +57,7 @@
   line-height: 1.75;
   white-space: pre-wrap;
   margin-bottom: 2rem;
+  z-index: 2;
 }
 
 .post-detail-date {
@@ -247,13 +248,14 @@
   }
 }
 
-.post-image-container {
+.post-image-detail-container {
   position: relative;
   border-radius: 0.5rem;
   overflow: hidden;
   box-shadow: 0 1px 3px rgba(0, 0, 0, 0.1);
   height: auto;
-  max-height: 1000px; /* Giới hạn chiều cao tối đa nếu cần */
+  box-sizing: content-box;
+
 }
 
 .post-detail-image {

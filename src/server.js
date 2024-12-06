@@ -26,8 +26,7 @@ app.use((req, res, next) => {
 // Cấu hình multer để lưu file vào thư mục uploads (ở thư mục public)
 const storage = multer.diskStorage({
     destination: (req, file, cb) => {
-        // Đường dẫn tuyệt đối đến thư mục public/uploads (ra ngoài thư mục src)
-        const uploadDir = path.join(__dirname, '..', 'public', 'uploads');  // Thêm '..' để đi ra ngoài src
+        const uploadDir = path.join(__dirname, '..', 'public', 'uploads');
 
         // Kiểm tra xem thư mục uploads đã tồn tại chưa, nếu chưa thì tạo mới
         if (!fs.existsSync(uploadDir)) {

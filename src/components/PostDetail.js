@@ -153,7 +153,7 @@ function PostDetail() {
               <>
                 <h1 className="post-detail-title">{post.title}</h1>
                 {post.images && (
-                  <div className="post-image-container">
+                  <div className="post-image-detail-container">
                     <img 
                       src={`http://localhost:5000/uploads/${post.images}`}
                       alt="Ảnh bài viết" 
@@ -161,6 +161,7 @@ function PostDetail() {
                     />
                   </div>
                 )}
+                <br></br>
                 <div className="post-detail-body">{post.nd}</div>
                 <div className="post-metadata">
                   <p className="post-author">Tác giả: {post.author.username}</p>
