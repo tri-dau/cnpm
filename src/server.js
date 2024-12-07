@@ -122,6 +122,13 @@ app.put('/api/posts/:id', upload.single('image'), async (req, res) => {
 
 app.delete('/api/posts/:id', postController.deletePost);
 
+const commentController = require('./controllers/commentController');
+
+app.get('/api/posts/:postId/comments', commentController.getCommentsByPost);
+app.post('/api/posts/:postId/comments', commentController.createComment);
+
+
+
 const PORT = 5000;
 async function startServer() {
     try {

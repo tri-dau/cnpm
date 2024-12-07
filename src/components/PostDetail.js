@@ -1,7 +1,8 @@
 import React, { useState, useEffect } from "react";
 import { useParams, Link, useNavigate } from "react-router-dom";
 import "./PostDetail.css";
-import ReactMarkdown from 'react-markdown';
+import ReactMarkdown from "react-markdown";
+import MDEditor from "@uiw/react-md-editor";
 
 function PostDetail() {
   const [post, setPost] = useState(null);
@@ -12,12 +13,16 @@ function PostDetail() {
   const [editedContent, setEditedContent] = useState("");
   const [user, setUser] = useState(null);
   const { id } = useParams();
+  const [comments, setComments] = useState([]);
+  const [newComment, setNewComment] = useState("");
+  const [commenterName, setCommenterName] = useState("");
   const navigate = useNavigate();
 
   useEffect(() => {
     const loggedInUser = JSON.parse(localStorage.getItem("user"));
     setUser(loggedInUser);
     fetchPost();
+    fetchComments();
   }, [id]);
 
   const fetchPost = async () => {
@@ -30,13 +35,53 @@ function PostDetail() {
       const data = await response.json();
       setPost(data);
       setEditedTitle(data.title);
-      setEditedContent(data.nd);
+      // Corrected property name from 'nd' to match backend
+      setEditedContent(data.nd || "");
       setError(null);
     } catch (error) {
       console.error("Error fetching post:", error);
       setError("Không thể tải bài viết. Vui lòng thử lại sau.");
     } finally {
       setLoading(false);
+    }
+  };
+
+  const fetchComments = async () => {
+    try {
+      const response = await fetch(
+        `http://localhost:5000/api/posts/${id}/comments`
+      );
+      if (!response.ok) throw new Error("Failed to fetch comments");
+      const data = await response.json();
+      setComments(data);
+    } catch (error) {
+      console.error(error);
+    }
+  };
+
+  const handleCommentSubmit = async () => {
+    try {
+      const response = await fetch(
+        `http://localhost:5000/api/posts/${id}/comments`,
+        {
+          method: "POST",
+          headers: {
+            "Content-Type": "application/json",
+          },
+          body: JSON.stringify({
+            postId: id,
+            userId: user.id,
+            content: newComment,
+          }),
+        }
+      );
+
+      if (!response.ok) throw new Error("Failed to post comment");
+      const newCommentData = await response.json();
+      setComments([newCommentData, ...comments]);
+      setNewComment("");
+    } catch (error) {
+      console.error(error);
     }
   };
 
@@ -47,21 +92,20 @@ function PostDetail() {
   const handleCancelEdit = () => {
     setIsEditing(false);
     setEditedTitle(post.title);
-    setEditedContent(post.nd);
+    setEditedContent(post.nd || "");
   };
 
   const handleSaveEdit = async () => {
     try {
+      // Prepare form data to handle potential image upload
+      const formData = new FormData();
+      formData.append("title", editedTitle);
+      formData.append("nd", editedContent);
+      formData.append("authorId", user.id);
+
       const response = await fetch(`http://localhost:5000/api/posts/${id}`, {
         method: "PUT",
-        headers: {
-          "Content-Type": "application/json",
-        },
-        body: JSON.stringify({
-          title: editedTitle,
-          nd: editedContent,
-          authorId: user.id,
-        }),
+        body: formData, // Using FormData to support potential file uploads
       });
 
       if (!response.ok) {
@@ -135,12 +179,16 @@ function PostDetail() {
                   className="edit-title-input"
                   placeholder="Tiêu đề bài viết"
                 />
-                <textarea
-                  value={editedContent}
-                  onChange={(e) => setEditedContent(e.target.value)}
-                  className="edit-content-input"
-                  placeholder="Nội dung bài viết"
-                />
+                <div data-color-mode="light">
+                  <MDEditor
+                    value={editedContent}
+                    onChange={setEditedContent}
+                    className="edit-content-input"
+                    placeholder="Nội dung bài viết"
+                    style={{ backgroundColor: "#f4f4f4", color: "black" }}
+                    height={500}
+                  />
+                </div>
                 <div className="edit-buttons">
                   <button onClick={handleSaveEdit} className="save-button">
                     Lưu
@@ -155,20 +203,21 @@ function PostDetail() {
                 <h1 className="post-detail-title">{post.title}</h1>
                 {post.images && (
                   <div className="post-image-detail-container">
-                    <img 
+                    <img
                       src={`http://localhost:5000/uploads/${post.images}`}
-                      alt="Ảnh bài viết" 
-                      className="post-detail-image" 
+                      alt="Ảnh bài viết"
+                      className="post-detail-image"
                     />
                   </div>
                 )}
-                <br></br>
-                <ReactMarkdown className="post-detail-body">{post.nd}</ReactMarkdown>
+                <br />
+                <ReactMarkdown className="post-detail-body">
+                  {post.nd}
+                </ReactMarkdown>
                 <div className="post-metadata">
                   <p className="post-author">Tác giả: {post.author.username}</p>
                   <div className="post-detail-date">
-                    Đăng ngày:{" "}
-                    {new Date(post.createdAt).toLocaleString()}
+                    Đăng ngày: {new Date(post.createdAt).toLocaleString()}
                   </div>
                 </div>
                 {isAuthor && (
@@ -187,6 +236,39 @@ function PostDetail() {
         ) : (
           <div className="error-message">Không tìm thấy bài viết</div>
         )}
+
+        <div className="comments-section">
+          <h3 className="comments-title">Bình luận</h3>
+          <ul className="comments-list">
+            {comments.map((comment) => (
+              <li key={comment.id} className="comment-item">
+                <div className="comment-header">
+                  <strong className="comment-username">
+                    {comment.user?.username || "Ẩn danh"}
+                  </strong>
+                  <small className="comment-date">
+                    {new Date(comment.createdAt).toLocaleString()}
+                  </small>
+                </div>
+                <p className="comment-content">{comment.content}</p>
+              </li>
+            ))}
+          </ul>
+          <div className="comment-form-container">
+            <textarea
+              className="comment-input"
+              placeholder="Viết bình luận..."
+              value={newComment}
+              onChange={(e) => setNewComment(e.target.value)}
+            />
+            <button
+              onClick={handleCommentSubmit}
+              className="comment-submit-button"
+            >
+              Gửi
+            </button>
+          </div>
+        </div>
       </main>
     </div>
   );
