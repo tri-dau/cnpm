@@ -28,7 +28,6 @@ function PostDetail() {
   const { id } = useParams();
   const [comments, setComments] = useState([]);
   const [newComment, setNewComment] = useState("");
-  const [commenterName, setCommenterName] = useState("");
   const navigate = useNavigate();
 
   useEffect(() => {

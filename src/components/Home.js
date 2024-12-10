@@ -3,7 +3,7 @@ import { Link, useNavigate } from "react-router-dom";
 import "./styles.css";
 import "./Home.css";
 import CreatePostButton from "./CreatePostButton";
-import ReactMarkdown from 'react-markdown';
+import ReactMarkdown from "react-markdown";
 
 function Home() {
   const [posts, setPosts] = useState([]);
@@ -47,7 +47,9 @@ function Home() {
   };
 
   return (
-    <div style={{ "display": "flex", "flexDirection": "column", "minHeight": "100vh" }}>
+    <div
+      style={{ display: "flex", flexDirection: "column", minHeight: "100vh" }}
+    >
       <header className="header">
         <nav className="nav-container">
           <div className="logo-wrapper">
@@ -65,8 +67,7 @@ function Home() {
                 </button>
               </>
             ) : (
-              <>
-              </>
+              <></>
             )}
           </div>
         </nav>
@@ -94,8 +95,16 @@ function Home() {
                     <article>
                       <div className="post-image-container">
                         <img
-                          src={post.images ? `http://localhost:5000/uploads/${post.images}` : "https://picsum.photos/1000?random=1"}
-                          alt={post.images ? "Image for this post" : "No image for this post :("}
+                          src={
+                            post.images
+                              ? `http://localhost:5000/uploads/${post.images}`
+                              : "https://picsum.photos/1000?random=1"
+                          }
+                          alt={
+                            post.images
+                              ? "Image for this post"
+                              : "No image for this post :("
+                          }
                           className="post-image"
                         />
                       </div>
@@ -127,7 +136,11 @@ function Home() {
             <div className="welcome-content">
               <div className="welcome-text-section">
                 <div className="text">
-                  Lorem ipsum dolor sit amet, consectetur adipiscing elit. Vestibulum lobortis varius tristique. Maecenas ut tincidunt velit. Sed nec magna nisl. Nullam tincidunt enim vel nunc ultrices, ac molestie purus malesuada. Cras malesuada tempor dolor, ut laoreet odio vestibulum a.
+                  Lorem ipsum dolor sit amet, consectetur adipiscing elit.
+                  Vestibulum lobortis varius tristique. Maecenas ut tincidunt
+                  velit. Sed nec magna nisl. Nullam tincidunt enim vel nunc
+                  ultrices, ac molestie purus malesuada. Cras malesuada tempor
+                  dolor, ut laoreet odio vestibulum a.
                 </div>
                 <div className="auth-buttons">
                   <Link to="/auth" className="login-button outlined">
@@ -157,13 +170,28 @@ function Home() {
               <p>Địa chỉ: 123 Đường ABC, Quận XYZ, TP.DN</p>
             </div>
             <div className="social-links">
-              <a href="https://youtu.be/dQw4w9WgXcQ?si=bP5Z6sNCjaXz8hZW" className="social-link" target="_blank" rel="noopener noreferrer">
+              <a
+                href="https://youtu.be/dQw4w9WgXcQ?si=bP5Z6sNCjaXz8hZW"
+                className="social-link"
+                target="_blank"
+                rel="noopener noreferrer"
+              >
                 Facebook
               </a>
-              <a href="https://github.com/tribeti" className="social-link" target="_blank" rel="noopener noreferrer">
+              <a
+                href="https://github.com/tribeti"
+                className="social-link"
+                target="_blank"
+                rel="noopener noreferrer"
+              >
                 Github
               </a>
-              <a href="https://youtu.be/dQw4w9WgXcQ?si=bP5Z6sNCjaXz8hZW" className="social-link" target="_blank" rel="noopener noreferrer">
+              <a
+                href="https://youtu.be/dQw4w9WgXcQ?si=bP5Z6sNCjaXz8hZW"
+                className="social-link"
+                target="_blank"
+                rel="noopener noreferrer"
+              >
                 Youtube
               </a>
             </div>
@@ -171,7 +199,10 @@ function Home() {
         </div>
 
         <div className="footer-bottom">
-          <p>&copy; {new Date().getFullYear()} TRI CORP. Tất cả các quyền được bảo lưu.</p>
+          <p>
+            &copy; {new Date().getFullYear()} TRI CORP. Tất cả các quyền được
+            bảo lưu.
+          </p>
         </div>
       </footer>
     </div>
