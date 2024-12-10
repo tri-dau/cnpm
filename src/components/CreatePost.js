@@ -27,19 +27,16 @@ function CreatePost() {
 
     // Validate file
     if (selectedFile) {
-      // Check file size (15MB limit)
       if (selectedFile.size > 15 * 1024 * 1024) {
         setError("Hình ảnh không được vượt quá 15MB");
         return;
       }
 
-      // Check file type
       if (!selectedFile.type.startsWith("image/")) {
         setError("Chỉ được tải lên các tệp hình ảnh");
         return;
       }
 
-      // Set image and create preview
       setImage(selectedFile);
       setPreview(URL.createObjectURL(selectedFile));
       setError("");

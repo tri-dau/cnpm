@@ -8,6 +8,7 @@ import Login from "./components/Login";
 import Register from "./components/Register";
 import PostDetail from "./components/PostDetail";
 import CreatePost from "./components/CreatePost";
+import LoginRegisterToggle from "./components/LoginRegisterToggle";
 
 function App() {
   return (
@@ -18,6 +19,7 @@ function App() {
         <Route path="/register" element={<Register />} />
         <Route path="/post/:id" element={<PostDetail />} />
         <Route path="/create-post" element={<CreatePost />} />
+        <Route path="/auth" element={<LoginRegisterToggle></LoginRegisterToggle>}></Route>
       </Routes>
       <ToastContainer />
     </Router>

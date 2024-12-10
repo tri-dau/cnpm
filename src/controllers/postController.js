@@ -55,7 +55,6 @@ const createPost = async (req, res) => {
 
         let imagePath = null;
 
-        // Handle single image upload
         if (req.files && req.files.length > 0) {
             imagePath = req.files[0].filename;
         }
@@ -64,7 +63,7 @@ const createPost = async (req, res) => {
             title,
             nd,
             authorId,
-            images: imagePath
+            images: imagePath,
         });
 
         const postWithAuthor = await Post.findOne({

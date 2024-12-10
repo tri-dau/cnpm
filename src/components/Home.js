@@ -130,7 +130,7 @@ function Home() {
                   Lorem ipsum dolor sit amet, consectetur adipiscing elit. Vestibulum lobortis varius tristique. Maecenas ut tincidunt velit. Sed nec magna nisl. Nullam tincidunt enim vel nunc ultrices, ac molestie purus malesuada. Cras malesuada tempor dolor, ut laoreet odio vestibulum a.
                 </div>
                 <div className="auth-buttons">
-                  <Link to="/login" className="login-button outlined">
+                  <Link to="/auth" className="login-button outlined">
                     Bắt đầu xem tin ngay !
                   </Link>
                 </div>
