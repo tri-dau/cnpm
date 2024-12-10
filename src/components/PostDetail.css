@@ -457,3 +457,15 @@
     text-align: center;
   }
 }
+
+.share-section {
+  margin-top: 20px;
+  padding: 10px 0;
+  border-top: 1px solid #ccc;
+}
+
+.share-buttons {
+  display: flex;
+  gap: 10px;
+  align-items: center;
+}

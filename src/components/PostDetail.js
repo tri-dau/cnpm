@@ -3,6 +3,16 @@ import { useParams, Link, useNavigate } from "react-router-dom";
 import "./PostDetail.css";
 import ReactMarkdown from "react-markdown";
 import MDEditor from "@uiw/react-md-editor";
+import {
+  FacebookShareButton,
+  TwitterShareButton,
+  LinkedinShareButton,
+  EmailShareButton,
+  FacebookIcon,
+  TwitterIcon,
+  LinkedinIcon,
+  EmailIcon,
+} from "react-share";
 
 function PostDetail() {
   const [post, setPost] = useState(null);
@@ -232,6 +242,35 @@ function PostDetail() {
                 )}
               </>
             )}
+            <div className="share-section">
+              <h4>Chia sẻ bài viết này:</h4>
+              <div className="share-buttons">
+                <FacebookShareButton
+                  url={window.location.href}
+                  quote={post.title}
+                >
+                  <FacebookIcon size={32} round />
+                </FacebookShareButton>
+                <TwitterShareButton
+                  url={window.location.href}
+                  title={post.title}
+                >
+                  <TwitterIcon size={32} round />
+                </TwitterShareButton>
+                <LinkedinShareButton
+                  url={window.location.href}
+                  summary={post.nd}
+                >
+                  <LinkedinIcon size={32} round />
+                </LinkedinShareButton>
+                <EmailShareButton
+                  url={window.location.href}
+                  subject={post.title}
+                >
+                  <EmailIcon size={32} round />
+                </EmailShareButton>
+              </div>
+            </div>
           </article>
         ) : (
           <div className="error-message">Không tìm thấy bài viết</div>
