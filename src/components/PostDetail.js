@@ -2,6 +2,9 @@ import React, { useState, useEffect } from "react";
 import { useParams, Link, useNavigate } from "react-router-dom";
 import "./PostDetail.css";
 import ReactMarkdown from "react-markdown";
+import remarkGfm from "remark-gfm";
+import remarkRehype from 'remark-rehype';
+import rehypeRaw from 'rehype-raw';
 import MDEditor from "@uiw/react-md-editor";
 import {
   FacebookShareButton,
@@ -221,9 +224,13 @@ function PostDetail() {
                   </div>
                 )}
                 <br />
-                <ReactMarkdown className="post-detail-body">
-                  {post.nd}
-                </ReactMarkdown>
+                <ReactMarkdown
+                  className="post-detail-body"
+                  children={post.nd}
+                  remarkPlugins={[remarkGfm, remarkRehype]}
+                  rehypePlugins={[rehypeRaw]}
+                  skipHtml={true}
+                ></ReactMarkdown>
                 <div className="post-metadata">
                   <p className="post-author">Tác giả: {post.author.username}</p>
                   <div className="post-detail-date">
