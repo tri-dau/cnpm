@@ -59,10 +59,10 @@ const upload = multer({
 
 const validatePostContent = (title, content) => {
   if (!title || title.trim().length < 5) {
-    return "Title must be at least 5 characters long";
+    return "Tiêu đề phải có ít nhất 5 kí tự";
   }
-  if (!content || content.trim().length < 10) {
-    return "Content must be at least 10 characters long";
+  if (!content || content.trim().length < 50) {
+    return "Nội dung phải có ít nhất 50 kí tự";
   }
   return null;
 };

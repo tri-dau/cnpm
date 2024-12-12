@@ -3,8 +3,8 @@ import { useParams, Link, useNavigate } from "react-router-dom";
 import "./PostDetail.css";
 import ReactMarkdown from "react-markdown";
 import remarkGfm from "remark-gfm";
-import remarkRehype from 'remark-rehype';
-import rehypeRaw from 'rehype-raw';
+import remarkRehype from "remark-rehype";
+import rehypeRaw from "rehype-raw";
 import MDEditor from "@uiw/react-md-editor";
 import {
   FacebookShareButton,

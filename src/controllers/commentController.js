@@ -2,22 +2,24 @@ const Comment = require("../models/Comment");
 const User = require("../models/User");
 
 const getCommentsByPost = async (req, res) => {
-    try {
-        const comments = await Comment.findAll({
-            where: { postId: req.params.postId },
-            include: [{
-                model: User,
-                as: 'user',
-                attributes: ['username'] // Lấy tên người dùng
-            }],
-            order: [['createdAt', 'DESC']]
-        });
+  try {
+    const comments = await Comment.findAll({
+      where: { postId: req.params.postId },
+      include: [
+        {
+          model: User,
+          as: "user",
+          attributes: ["username"],
+        },
+      ],
+      order: [["createdAt", "DESC"]],
+    });
 
-        res.json(comments);
-    } catch (error) {
-        console.error('Error fetching comments:', error);
-        res.status(500).json({ error: 'Lỗi server' });
-    }
+    res.json(comments);
+  } catch (error) {
+    console.error("Error fetching comments:", error);
+    res.status(500).json({ error: "Lỗi server" });
+  }
 };
 
 const createComment = async (req, res) => {

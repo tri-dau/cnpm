@@ -1,5 +1,5 @@
 import React, { useState } from "react";
-import {useNavigate, Link } from "react-router-dom";
+import { useNavigate, Link } from "react-router-dom";
 import "./styles.css";
 
 function LoginRegisterToggle() {
@@ -13,7 +13,6 @@ function LoginRegisterToggle() {
 
   const toggleMode = () => {
     setIsLogin(!isLogin);
-    // Reset form khi chuyển chế độ
     setUsername("");
     setEmail("");
     setPassword("");
@@ -175,8 +174,8 @@ function LoginRegisterToggle() {
         </form>
 
         <Link to="/" className="home-link">
-              Về trang chủ
-            </Link>
+          Về trang chủ
+        </Link>
       </div>
     </div>
   );
